@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mon Training">
+<title>Mon Training</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #0A0A0C;
+    --bg2: #111114;
+    --bg3: #18181C;
+    --border: #222226;
+    --text: #F0F0F0;
+    --muted: #555560;
+    --push: #E84A5F;
+    --pull: #4A90D9;
+    --lower: #27AE60;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; }
+
+  #app { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(72px + var(--safe-bottom)); padding-top: var(--safe-top); }
+
+  .screen { display: none; padding: 0 16px; }
+  .screen.active { display: block; }
+
+  /* ── TYPOGRAPHY ── */
+  .label { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+  .title { font-family: 'Bebas Neue', cursive; font-size: 38px; letter-spacing: 2px; line-height: 1; }
+  .subtitle { font-family: 'Bebas Neue', cursive; font-size: 24px; letter-spacing: 1px; }
+
+  /* ── CARDS ── */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .card-btn { cursor: pointer; transition: background 0.15s; }
+  .card-btn:active { background: var(--bg3); }
+
+  /* ── SEANCE CARDS ── */
+  .seance-card { display: flex; align-items: center; gap: 14px; }
+  .seance-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .seance-info { flex: 1; }
+  .seance-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 2px; padding: 2px 8px; border-radius: 4px; color: #fff; margin-bottom: 4px; text-transform: uppercase; }
+  .seance-name { font-family: 'Bebas Neue'; font-size: 22px; letter-spacing: 1px; line-height: 1.1; }
+  .seance-last { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .arrow { font-size: 18px; }
+
+  /* ── STAT CHIPS ── */
+  .stats-row { display: flex; gap: 20px; padding: 16px 0; }
+  .stat { }
+  .stat-val { font-family: 'Bebas Neue'; font-size: 32px; color: var(--text); line-height: 1; }
+  .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+  /* ── WORKOUT HEADER ── */
+  .workout-header { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--border); padding: 12px 16px; }
+  .workout-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .progress-bar { background: var(--border); border-radius: 4px; height: 4px; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .progress-text { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+  /* ── EXERCISE CARD ── */
+  .ex-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 14px; overflow: hidden; transition: border-color 0.2s; }
+  .ex-card.complete { border-color: rgba(39,174,96,0.35); }
+
+  .ex-illustration { width: 100%; height: 140px; background: var(--bg3); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .ex-illustration svg { max-height: 120px; max-width: 90%; }
+  .ex-machine-badge { position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,0.7); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 10px; color: var(--muted); letter-spacing: 0.5px; backdrop-filter: blur(4px); }
+
+  .ex-body { padding: 14px; }
+  .ex-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+  .ex-check-icon { font-size: 15px; }
+  .ex-name { font-size: 15px; font-weight: 600; }
+  .ex-detail { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+
+  .sets-header { display: grid; grid-template-columns: 26px 1fr 1fr 36px; gap: 6px; margin-bottom: 8px; }
+  .sets-header span { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+
+  .set-row { display: grid; grid-template-columns: 26px 1fr 1fr 36px; gap: 6px; margin-bottom: 8px; align-items: center; transition: opacity 0.2s; }
+  .set-row.done { opacity: 0.5; }
+  .set-num { text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; }
+
+  .set-input-wrap { position: relative; }
+  .set-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 6px; color: var(--text); font-size: 15px; text-align: center; outline: none; font-family: 'DM Sans'; -webkit-appearance: none; appearance: none; }
+  .set-input:focus { border-color: #444; }
+  .set-hint { position: absolute; bottom: -14px; left: 0; right: 0; text-align: center; font-size: 9px; color: var(--push); letter-spacing: 0.3px; white-space: nowrap; }
+
+  .set-check { width: 32px; height: 32px; border-radius: 8px; border: 2px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; transition: all 0.15s; }
+  .set-check.checked { background: var(--lower); border-color: var(--lower); }
+
+  .sets-spacer { height: 10px; }
+
+  /* ── FINISH BUTTON ── */
+  .finish-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: var(--bg); border-top: 1px solid var(--border); padding-bottom: calc(12px + var(--safe-bottom)); }
+  .finish-btn { width: 100%; padding: 15px; border-radius: 12px; cursor: pointer; font-family: 'Bebas Neue'; font-size: 18px; letter-spacing: 2px; transition: all 0.2s; border: 2px solid; }
+
+  /* ── CANCEL BTN ── */
+  .cancel-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-family: 'DM Sans'; }
+
+  /* ── HISTORY ── */
+  .hist-row { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .hist-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .hist-name { font-size: 13px; font-weight: 600; color: #ddd; }
+  .hist-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .hist-arrow { margin-left: auto; font-size: 14px; color: #333; }
+
+  /* ── SESSION DETAIL ── */
+  .session-sets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .session-set-chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; font-size: 12px; color: var(--muted); }
+  .session-set-chip.done { color: #ddd; }
+
+  /* ── BACK BUTTON ── */
+  .back-btn { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; padding: 0; margin-right: 4px; }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { padding: 20px 0 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════
+       HOME
+  ══════════════════════════════════════ -->
+  <div id="screen-home" class="screen active">
+    <div style="padding: 28px 0 8px;">
+      <p class="label">Programme PPL</p>
+      <h1 class="title" style="margin-top: 4px;">Mon<br>Training</h1>
+      <div class="stats-row" id="home-stats"></div>
+    </div>
+    <div class="divider" style="margin-top:0;"></div>
+
+    <div class="section-header"><p class="label">Commencer</p></div>
+    <div id="seance-cards"></div>
+
+    <div id="history-section">
+      <div class="divider"></div>
+      <div class="section-header"><p class="label">Historique récent</p></div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       WORKOUT
+  ══════════════════════════════════════ -->
+  <div id="screen-workout" class="screen">
+    <div class="workout-header" id="workout-header"></div>
+    <div style="padding: 16px 0 0;" id="exercises-list"></div>
+    <div style="height: 80px;"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SESSION DETAIL
+  ══════════════════════════════════════ -->
+  <div id="screen-session" class="screen">
+    <div style="padding: 16px 0 8px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+      <button class="back-btn" onclick="showHome()">←</button>
+      <div id="session-header"></div>
+    </div>
+    <div id="session-detail"></div>
+  </div>
+
+</div>
+
+<!-- Fixed finish button (workout only) -->
+<div class="finish-bar" id="finish-bar" style="display:none;">
+  <button class="finish-btn" id="finish-btn" onclick="finishWorkout()"></button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const COLORS = { A: '#E84A5F', B: '#4A90D9', C: '#27AE60' };
+
+const PROGRAM = {
+  A: {
+    label: 'Push', subtitle: 'Poussée',
+    exercises: [
+      {
+        id:'A1', name:'Presse à pectoraux', machine:'Technogym Chest Press',
+        detail:'Pectoraux · Triceps · Épaules ant.', target:'10–12 reps', sets:3, rir:'2–3',
+        tip:'Régle le siège : poignées à hauteur de poitrine. Expire en poussant.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Silhouette assis, presse pectoraux -->
+          <rect x="20" y="80" width="120" height="8" rx="4" fill="#222"/>
+          <rect x="55" y="50" width="50" height="35" rx="6" fill="#1e1e22"/>
+          <!-- siège -->
+          <rect x="60" y="82" width="40" height="10" rx="3" fill="#2a2a30"/>
+          <!-- dossier -->
+          <rect x="75" y="52" width="12" height="30" rx="3" fill="#2a2a30"/>
+          <!-- bras machine -->
+          <line x1="30" y1="65" x2="62" y2="65" stroke="#E84A5F" stroke-width="4" stroke-linecap="round"/>
+          <line x1="130" y1="65" x2="98" y2="65" stroke="#E84A5F" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="30" cy="65" r="7" fill="#2a2a30" stroke="#E84A5F" stroke-width="2"/>
+          <circle cx="130" cy="65" r="7" fill="#2a2a30" stroke="#E84A5F" stroke-width="2"/>
+          <!-- poids -->
+          <rect x="22" y="58" width="8" height="14" rx="2" fill="#333"/>
+          <rect x="122" y="58" width="8" height="14" rx="2" fill="#333"/>
+          <!-- silhouette -->
+          <circle cx="87" cy="42" r="9" fill="#3a3a44"/>
+          <line x1="87" y1="51" x2="87" y2="74" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="87" y1="58" x2="63" y2="64" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="87" y1="58" x2="111" y2="64" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- muscles highlight -->
+          <ellipse cx="75" cy="62" rx="10" ry="6" fill="#E84A5F" fill-opacity="0.25"/>
+          <ellipse cx="99" cy="62" rx="10" ry="6" fill="#E84A5F" fill-opacity="0.25"/>
+        </svg>`
+      },
+      {
+        id:'A2', name:'Développé épaules', machine:'Technogym Shoulder Press',
+        detail:'Épaules · Triceps', target:'10–12 reps', sets:3, rir:'2–3',
+        tip:'Coudes légèrement devant le corps, jamais derrière la nuque.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="85" width="120" height="7" rx="3" fill="#222"/>
+          <rect x="58" y="55" width="44" height="35" rx="6" fill="#1e1e22"/>
+          <rect x="62" y="85" width="36" height="9" rx="3" fill="#2a2a30"/>
+          <rect x="75" y="55" width="10" height="30" rx="3" fill="#2a2a30"/>
+          <!-- bras levés -->
+          <line x1="35" y1="55" x2="62" y2="68" stroke="#4A90D9" stroke-width="4" stroke-linecap="round"/>
+          <line x1="125" y1="55" x2="98" y2="68" stroke="#4A90D9" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="35" cy="55" r="7" fill="#2a2a30" stroke="#4A90D9" stroke-width="2"/>
+          <circle cx="125" cy="55" r="7" fill="#2a2a30" stroke="#4A90D9" stroke-width="2"/>
+          <rect x="27" y="48" width="8" height="14" rx="2" fill="#333"/>
+          <rect x="117" y="48" width="8" height="14" rx="2" fill="#333"/>
+          <circle cx="80" cy="42" r="8" fill="#3a3a44"/>
+          <line x1="80" y1="50" x2="80" y2="72" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="80" y1="56" x2="63" y2="66" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="56" x2="97" y2="66" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="67" cy="58" rx="8" ry="5" fill="#E84A5F" fill-opacity="0.3"/>
+          <ellipse cx="93" cy="58" rx="8" ry="5" fill="#E84A5F" fill-opacity="0.3"/>
+        </svg>`
+      },
+      {
+        id:'A3', name:'Écarté poulie basse', machine:'Technogym Cable Station',
+        detail:'Pectoraux internes · Sternal', target:'12–15 reps', sets:3, rir:'2–3',
+        tip:'Mouvement lent en descente. Croise légèrement les mains en haut.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Station poulie -->
+          <rect x="10" y="20" width="8" height="80" rx="3" fill="#222"/>
+          <rect x="142" y="20" width="8" height="80" rx="3" fill="#222"/>
+          <circle cx="14" cy="85" r="6" fill="#333" stroke="#E84A5F" stroke-width="1.5"/>
+          <circle cx="146" cy="85" r="6" fill="#333" stroke="#E84A5F" stroke-width="1.5"/>
+          <!-- cables -->
+          <line x1="14" y1="79" x2="60" y2="55" stroke="#E84A5F" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <line x1="146" y1="79" x2="100" y2="55" stroke="#E84A5F" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <!-- sol -->
+          <rect x="20" y="98" width="120" height="6" rx="2" fill="#1a1a1e"/>
+          <!-- silhouette debout -->
+          <circle cx="80" cy="32" r="9" fill="#3a3a44"/>
+          <line x1="80" y1="41" x2="80" y2="75" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="80" y1="50" x2="60" y2="56" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="50" x2="100" y2="56" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="75" x2="70" y2="98" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="75" x2="90" y2="98" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- pecto highlight -->
+          <ellipse cx="80" cy="52" rx="18" ry="10" fill="#E84A5F" fill-opacity="0.2"/>
+        </svg>`
+      },
+      {
+        id:'A4', name:'Élévations latérales', machine:'Haltères (rack)',
+        detail:'Épaules latérales · Deltoïdes', target:'12–15 reps', sets:3, rir:'3',
+        tip:'Poids léger. Monte jusqu\'à l\'horizontale, pas plus. Forme > charge.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Rack haltères fond -->
+          <rect x="10" y="70" width="50" height="30" rx="4" fill="#1e1e22"/>
+          <rect x="100" y="70" width="50" height="30" rx="4" fill="#1e1e22"/>
+          <!-- silhouette bras écartés -->
+          <circle cx="80" cy="32" r="9" fill="#3a3a44"/>
+          <line x1="80" y1="41" x2="80" y2="76" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="80" y1="50" x2="35" y2="60" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="80" y1="50" x2="125" y2="60" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="80" y1="76" x2="70" y2="100" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="76" x2="90" y2="100" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- haltères -->
+          <rect x="22" y="57" width="18" height="6" rx="3" fill="#444"/>
+          <rect x="120" y="57" width="18" height="6" rx="3" fill="#444"/>
+          <!-- épaules highlight -->
+          <ellipse cx="47" cy="55" rx="10" ry="7" fill="#E84A5F" fill-opacity="0.3"/>
+          <ellipse cx="113" cy="55" rx="10" ry="7" fill="#E84A5F" fill-opacity="0.3"/>
+        </svg>`
+      },
+      {
+        id:'A5', name:'Triceps poulie haute', machine:'Technogym Cable — corde',
+        detail:'Triceps (3 chefs)', target:'12–15 reps', sets:3, rir:'2',
+        tip:'Coudes fixes contre le buste. Extension complète à chaque rep.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="68" y="10" width="24" height="60" rx="4" fill="#1e1e22"/>
+          <circle cx="80" cy="14" r="8" fill="#333" stroke="#E84A5F" stroke-width="1.5"/>
+          <!-- corde -->
+          <line x1="80" y1="22" x2="80" y2="50" stroke="#E84A5F" stroke-width="2"/>
+          <line x1="80" y1="50" x2="65" y2="58" stroke="#E84A5F" stroke-width="2" stroke-linecap="round"/>
+          <line x1="80" y1="50" x2="95" y2="58" stroke="#E84A5F" stroke-width="2" stroke-linecap="round"/>
+          <!-- silhouette -->
+          <circle cx="80" cy="38" r="8" fill="#3a3a44"/>
+          <line x1="80" y1="46" x2="80" y2="80" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <!-- bras triceps -->
+          <line x1="75" y1="55" x2="68" y2="78" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="85" y1="55" x2="92" y2="78" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="80" x2="72" y2="105" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="80" x2="88" y2="105" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- triceps highlight -->
+          <ellipse cx="68" cy="72" rx="7" ry="10" fill="#E84A5F" fill-opacity="0.3" transform="rotate(-10 68 72)"/>
+          <ellipse cx="92" cy="72" rx="7" ry="10" fill="#E84A5F" fill-opacity="0.3" transform="rotate(10 92 72)"/>
+        </svg>`
+      },
+    ]
+  },
+  B: {
+    label: 'Pull', subtitle: 'Tirage',
+    exercises: [
+      {
+        id:'B1', name:'Tirage horizontal', machine:'Technogym Seated Row',
+        detail:'Grand dorsal · Trapèzes · Biceps', target:'10–12 reps', sets:3, rir:'2–3',
+        tip:'Omoplates actives : tire vers le nombril en serrant le dos, pas les bras.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Machine row -->
+          <rect x="100" y="55" width="45" height="35" rx="6" fill="#1e1e22"/>
+          <circle cx="135" cy="65" r="8" fill="#333" stroke="#4A90D9" stroke-width="1.5"/>
+          <rect x="112" y="55" width="10" height="35" rx="2" fill="#2a2a30"/>
+          <rect x="100" y="85" width="45" height="8" rx="3" fill="#2a2a30"/>
+          <!-- cable -->
+          <line x1="127" y1="65" x2="80" y2="65" stroke="#4A90D9" stroke-width="2" stroke-dasharray="3,2"/>
+          <!-- poignée -->
+          <rect x="75" y="61" width="12" height="8" rx="3" fill="#333" stroke="#4A90D9" stroke-width="1"/>
+          <!-- sol -->
+          <rect x="10" y="95" width="140" height="6" rx="2" fill="#1a1a1e"/>
+          <!-- bench -->
+          <rect x="30" y="72" width="55" height="10" rx="4" fill="#2a2a30"/>
+          <!-- silhouette assis penché -->
+          <circle cx="55" cy="50" r="8" fill="#3a3a44"/>
+          <line x1="55" y1="58" x2="55" y2="82" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="55" y1="65" x2="76" y2="64" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="55" y1="65" x2="34" y2="70" stroke="#3a3a44" stroke-width="3" stroke-linecap="round"/>
+          <line x1="55" y1="82" x2="45" y2="95" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="55" y1="82" x2="65" y2="95" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- dos highlight -->
+          <ellipse cx="55" cy="66" rx="14" ry="9" fill="#4A90D9" fill-opacity="0.25"/>
+        </svg>`
+      },
+      {
+        id:'B2', name:'Tirage vertical', machine:'Technogym Lat Pulldown',
+        detail:'Grand dorsal · Biceps · Rhomboïdes', target:'10–12 reps', sets:3, rir:'2–3',
+        tip:'Prise légèrement + large que les épaules. Tire vers le haut du sternum.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Barre overhead -->
+          <rect x="25" y="18" width="110" height="6" rx="3" fill="#333"/>
+          <line x1="80" y1="18" x2="80" y2="5" stroke="#333" stroke-width="3"/>
+          <circle cx="80" cy="5" r="4" fill="#444"/>
+          <!-- câble -->
+          <line x1="80" y1="24" x2="80" y2="48" stroke="#4A90D9" stroke-width="2"/>
+          <!-- barre tirée -->
+          <rect x="48" y="46" width="64" height="7" rx="3" fill="#444" stroke="#4A90D9" stroke-width="1.5"/>
+          <!-- prise mains -->
+          <rect x="50" y="43" width="10" height="7" rx="2" fill="#555"/>
+          <rect x="100" y="43" width="10" height="7" rx="2" fill="#555"/>
+          <!-- siège -->
+          <rect x="55" y="88" width="50" height="10" rx="3" fill="#2a2a30"/>
+          <!-- silhouette -->
+          <circle cx="80" cy="38" r="8" fill="#3a3a44"/>
+          <line x1="80" y1="46" x2="80" y2="80" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <!-- bras levés -->
+          <line x1="80" y1="52" x2="52" y2="46" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="52" x2="108" y2="46" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="80" x2="70" y2="98" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="80" y1="80" x2="90" y2="98" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- dos highlight -->
+          <ellipse cx="80" cy="62" rx="16" ry="12" fill="#4A90D9" fill-opacity="0.2"/>
+        </svg>`
+      },
+      {
+        id:'B3', name:'Curl biceps haltères', machine:'Haltères (rack)',
+        detail:'Biceps · Brachial', target:'12–15 reps', sets:3, rir:'2–3',
+        tip:'Supination complète : tourne le poignet vers toi en montant.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- silhouette debout -->
+          <circle cx="80" cy="30" r="9" fill="#3a3a44"/>
+          <line x1="80" y1="39" x2="80" y2="76" stroke="#3a3a44" stroke-width="7" stroke-linecap="round"/>
+          <!-- bras droits vers le bas -->
+          <line x1="78" y1="50" x2="55" y2="75" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- bras gauche fléchi (curl) -->
+          <line x1="82" y1="50" x2="105" y2="55" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="105" y1="55" x2="95" y2="38" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- haltères -->
+          <rect x="46" y="73" width="18" height="6" rx="3" fill="#444"/>
+          <rect x="86" y="33" width="18" height="6" rx="3" fill="#444" transform="rotate(-45 86 33)"/>
+          <!-- biceps highlight -->
+          <ellipse cx="97" cy="47" rx="9" ry="7" fill="#4A90D9" fill-opacity="0.35" transform="rotate(-40 97 47)"/>
+          <!-- jambes -->
+          <line x1="80" y1="76" x2="70" y2="100" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="80" y1="76" x2="90" y2="100" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+        </svg>`
+      },
+      {
+        id:'B4', name:'Face pull poulie', machine:'Technogym Cable — corde',
+        detail:'Trapèzes moy. · Rotateurs externes', target:'15 reps', sets:3, rir:'3',
+        tip:'Indispensable pour la santé des épaules. Ne jamais le négliger.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Poulie fixe -->
+          <rect x="120" y="30" width="28" height="55" rx="5" fill="#1e1e22"/>
+          <circle cx="134" cy="52" r="7" fill="#333" stroke="#4A90D9" stroke-width="1.5"/>
+          <!-- corde -->
+          <line x1="127" y1="52" x2="90" y2="52" stroke="#4A90D9" stroke-width="2" stroke-dasharray="3,2"/>
+          <line x1="90" y1="52" x2="78" y2="46" stroke="#4A90D9" stroke-width="2"/>
+          <line x1="90" y1="52" x2="78" y2="58" stroke="#4A90D9" stroke-width="2"/>
+          <!-- silhouette -->
+          <circle cx="60" cy="38" r="8" fill="#3a3a44"/>
+          <line x1="60" y1="46" x2="60" y2="80" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <!-- bras tendus vers la poulie -->
+          <line x1="60" y1="54" x2="78" y2="48" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="54" x2="78" y2="60" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="80" x2="50" y2="100" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="80" x2="70" y2="100" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- sol -->
+          <rect x="10" y="100" width="140" height="5" rx="2" fill="#1a1a1e"/>
+          <!-- highlight trapèzes -->
+          <ellipse cx="60" cy="55" rx="14" ry="8" fill="#4A90D9" fill-opacity="0.2"/>
+        </svg>`
+      },
+      {
+        id:'B5', name:'Curl marteau', machine:'Haltères (rack)',
+        detail:'Brachial · Brachio-radial · Avant-bras', target:'12 reps', sets:2, rir:'3',
+        tip:'Prise neutre (pouce vers le haut). Alterne les bras.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="80" cy="30" r="9" fill="#3a3a44"/>
+          <line x1="80" y1="39" x2="80" y2="78" stroke="#3a3a44" stroke-width="7" stroke-linecap="round"/>
+          <!-- bras gauche bas -->
+          <line x1="77" y1="52" x2="52" y2="72" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- bras droit fléchi marteau -->
+          <line x1="83" y1="52" x2="108" y2="52" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="108" y1="52" x2="108" y2="35" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- haltères -->
+          <rect x="42" y="70" width="6" height="16" rx="3" fill="#444"/>
+          <rect x="105" y="26" width="6" height="16" rx="3" fill="#444"/>
+          <!-- brachial highlight -->
+          <ellipse cx="110" cy="44" rx="7" ry="10" fill="#4A90D9" fill-opacity="0.3"/>
+          <line x1="80" y1="78" x2="70" y2="102" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="80" y1="78" x2="90" y2="102" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+        </svg>`
+      },
+    ]
+  },
+  C: {
+    label: 'Lower', subtitle: 'Jambes & Core',
+    exercises: [
+      {
+        id:'C1', name:'Leg press machine', machine:'Technogym Leg Press',
+        detail:'Quadriceps · Fessiers · Ischios', target:'10–12 reps', sets:4, rir:'2–3',
+        tip:'Pieds écartés à la largeur des épaules. Amplitude complète, genoux ne dépassent pas les orteils.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Machine inclinée -->
+          <rect x="10" y="40" width="90" height="55" rx="6" fill="#1e1e22" transform="rotate(-15 10 40)"/>
+          <rect x="110" y="25" width="40" height="70" rx="5" fill="#2a2a30"/>
+          <!-- plateau pied -->
+          <rect x="12" y="55" width="55" height="12" rx="4" fill="#333" stroke="#27AE60" stroke-width="1.5" transform="rotate(-15 12 55)"/>
+          <!-- poids -->
+          <rect x="115" y="30" width="15" height="55" rx="3" fill="#333"/>
+          <line x1="115" y1="38" x2="130" y2="38" stroke="#444" stroke-width="1"/>
+          <line x1="115" y1="48" x2="130" y2="48" stroke="#444" stroke-width="1"/>
+          <line x1="115" y1="58" x2="130" y2="58" stroke="#444" stroke-width="1"/>
+          <!-- silhouette allongée -->
+          <circle cx="80" cy="35" r="8" fill="#3a3a44"/>
+          <line x1="80" y1="43" x2="80" y2="70" stroke="#3a3a44" stroke-width="7" stroke-linecap="round"/>
+          <!-- jambes vers plateau -->
+          <line x1="80" y1="70" x2="50" y2="55" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="80" y1="70" x2="45" y2="60" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- quad highlight -->
+          <ellipse cx="62" cy="62" rx="14" ry="6" fill="#27AE60" fill-opacity="0.3" transform="rotate(-25 62 62)"/>
+        </svg>`
+      },
+      {
+        id:'C2', name:'Leg curl allongé', machine:'Technogym Leg Curl',
+        detail:'Ischios-jambiers · Biceps fémoral', target:'12–15 reps', sets:3, rir:'2–3',
+        tip:'Phase excentrique lente (3 secondes en descente). C\'est là que ça se construit.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Machine allongée -->
+          <rect x="15" y="60" width="130" height="22" rx="6" fill="#1e1e22"/>
+          <rect x="15" y="58" width="130" height="10" rx="4" fill="#2a2a30"/>
+          <!-- coussin jambes -->
+          <rect x="100" y="50" width="30" height="12" rx="6" fill="#333" stroke="#27AE60" stroke-width="1.5"/>
+          <!-- poids côté -->
+          <rect x="140" y="55" width="10" height="28" rx="2" fill="#333"/>
+          <!-- silhouette allongée sur ventre -->
+          <circle cx="45" cy="55" r="8" fill="#3a3a44"/>
+          <line x1="45" y1="55" x2="115" y2="58" stroke="#3a3a44" stroke-width="8" stroke-linecap="round"/>
+          <!-- jambes fléchies -->
+          <line x1="115" y1="58" x2="112" y2="40" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="115" y1="58" x2="118" y2="38" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <!-- ischio highlight -->
+          <ellipse cx="100" cy="53" rx="18" ry="7" fill="#27AE60" fill-opacity="0.3"/>
+        </svg>`
+      },
+      {
+        id:'C3', name:'Abducteur machine', machine:'Technogym Hip Abductor',
+        detail:'Fessiers moy. · Abducteurs · TFL', target:'15 reps', sets:3, rir:'2',
+        tip:'Clé pour la stabilité du bassin. Mouvement contrôlé, pause en position ouverte.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Machine -->
+          <rect x="45" y="50" width="70" height="45" rx="6" fill="#1e1e22"/>
+          <rect x="55" y="88" width="50" height="10" rx="3" fill="#2a2a30"/>
+          <rect x="72" y="52" width="16" height="38" rx="3" fill="#2a2a30"/>
+          <!-- coussins -->
+          <rect x="30" y="62" width="22" height="12" rx="4" fill="#333" stroke="#27AE60" stroke-width="1.5"/>
+          <rect x="108" y="62" width="22" height="12" rx="4" fill="#333" stroke="#27AE60" stroke-width="1.5"/>
+          <!-- silhouette assise jambes écartées -->
+          <circle cx="80" cy="40" r="8" fill="#3a3a44"/>
+          <line x1="80" y1="48" x2="80" y2="72" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="80" y1="68" x2="45" y2="70" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <line x1="80" y1="68" x2="115" y2="70" stroke="#3a3a44" stroke-width="6" stroke-linecap="round"/>
+          <!-- fessiers highlight -->
+          <ellipse cx="45" cy="70" rx="12" ry="7" fill="#27AE60" fill-opacity="0.35"/>
+          <ellipse cx="115" cy="70" rx="12" ry="7" fill="#27AE60" fill-opacity="0.35"/>
+        </svg>`
+      },
+      {
+        id:'C4', name:'Mollets debout', machine:'Technogym Calf Raise',
+        detail:'Gastrocnémiens · Soléaire', target:'15–20 reps', sets:4, rir:'2',
+        tip:'Amplitude totale. Pause 1 seconde en bas (étirement complet).',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Machine -->
+          <rect x="50" y="20" width="60" height="40" rx="6" fill="#1e1e22"/>
+          <rect x="55" y="55" width="50" height="8" rx="3" fill="#2a2a30"/>
+          <!-- épaulières -->
+          <rect x="55" y="32" width="20" height="10" rx="4" fill="#333" stroke="#27AE60" stroke-width="1.5"/>
+          <rect x="85" y="32" width="20" height="10" rx="4" fill="#333" stroke="#27AE60" stroke-width="1.5"/>
+          <!-- marche -->
+          <rect x="58" y="90" width="44" height="10" rx="3" fill="#2a2a30"/>
+          <!-- silhouette sur pointes -->
+          <circle cx="80" cy="30" r="8" fill="#3a3a44"/>
+          <line x1="80" y1="38" x2="80" y2="70" stroke="#3a3a44" stroke-width="7" stroke-linecap="round"/>
+          <line x1="80" y1="70" x2="68" y2="90" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="80" y1="70" x2="92" y2="90" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- pointes pieds -->
+          <ellipse cx="68" cy="95" rx="10" ry="4" fill="#3a3a44"/>
+          <ellipse cx="92" cy="95" rx="10" ry="4" fill="#3a3a44"/>
+          <!-- mollet highlight -->
+          <ellipse cx="68" cy="82" rx="8" ry="10" fill="#27AE60" fill-opacity="0.35"/>
+          <ellipse cx="92" cy="82" rx="8" ry="10" fill="#27AE60" fill-opacity="0.35"/>
+        </svg>`
+      },
+      {
+        id:'C5', name:'Planche', machine:'Tapis au sol',
+        detail:'Core · Transverse · Stabilisateurs', target:'30–45 sec', sets:3, rir:'—',
+        tip:'Fessiers contractés, bassin neutre (pas cambré). Regarde le sol. Allonge la durée chaque semaine.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- tapis -->
+          <rect x="10" y="88" width="140" height="8" rx="4" fill="#1e1e22"/>
+          <!-- silhouette en planche -->
+          <circle cx="45" cy="68" r="8" fill="#3a3a44"/>
+          <!-- corps horizontal -->
+          <rect x="40" y="72" width="75" height="10" rx="5" fill="#3a3a44"/>
+          <!-- avant-bras -->
+          <rect x="28" y="79" width="22" height="8" rx="4" fill="#3a3a44"/>
+          <!-- pieds -->
+          <rect x="110" y="83" width="18" height="6" rx="3" fill="#3a3a44"/>
+          <!-- core highlight -->
+          <rect x="55" y="72" width="45" height="10" rx="5" fill="#27AE60" fill-opacity="0.3"/>
+          <!-- timer icon -->
+          <circle cx="128" cy="35" r="16" fill="none" stroke="#27AE60" stroke-width="2"/>
+          <line x1="128" y1="25" x2="128" y2="35" stroke="#27AE60" stroke-width="2" stroke-linecap="round"/>
+          <line x1="128" y1="35" x2="136" y2="40" stroke="#27AE60" stroke-width="2" stroke-linecap="round"/>
+          <text x="113" y="58" font-size="9" fill="#555" font-family="DM Sans">DURÉE</text>
+        </svg>`
+      },
+      {
+        id:'C6', name:'Rowing haltère', machine:'Haltères + banc plat',
+        detail:'Grand dorsal · Rhomboïdes · Biceps', target:'10–12 reps', sets:3, rir:'2–3',
+        tip:'Une main au banc. Coude le long du corps. Tire vers la hanche, pas l\'épaule.',
+        svg:`<svg viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- banc -->
+          <rect x="20" y="70" width="90" height="12" rx="5" fill="#2a2a30"/>
+          <rect x="25" y="82" width="8" height="20" rx="3" fill="#222"/>
+          <rect x="97" y="82" width="8" height="20" rx="3" fill="#222"/>
+          <!-- sol -->
+          <rect x="10" y="100" width="140" height="6" rx="2" fill="#1a1a1e"/>
+          <!-- silhouette penchée -->
+          <circle cx="75" cy="48" r="8" fill="#3a3a44"/>
+          <!-- dos horizontal -->
+          <line x1="75" y1="56" x2="75" y2="72" stroke="#3a3a44" stroke-width="7" stroke-linecap="round"/>
+          <!-- bras appui -->
+          <line x1="68" y1="62" x2="45" y2="72" stroke="#3a3a44" stroke-width="4" stroke-linecap="round"/>
+          <!-- bras tirage -->
+          <line x1="82" y1="62" x2="100" y2="72" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="100" y1="72" x2="104" y2="55" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- haltère -->
+          <rect x="100" y="50" width="18" height="6" rx="3" fill="#444" transform="rotate(15 100 50)"/>
+          <!-- jambe à genou -->
+          <line x1="75" y1="72" x2="55" y2="90" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <line x1="75" y1="72" x2="95" y2="95" stroke="#3a3a44" stroke-width="5" stroke-linecap="round"/>
+          <!-- dos highlight -->
+          <ellipse cx="82" cy="63" rx="14" ry="8" fill="#27AE60" fill-opacity="0.3"/>
+        </svg>`
+      },
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const STORAGE_KEY = 'fp_tracker_v2';
+let state = { sessions: [] };
+let current = null; // active workout
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch(e) {}
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+}
+
+function getLastSession(key) {
+  return state.sessions.find(s => s.key === key) || null;
+}
+
+function getLastKg(key, exId, setIdx) {
+  const s = getLastSession(key);
+  return s?.sets?.[exId]?.[setIdx]?.kg || null;
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  document.getElementById('finish-bar').style.display = id === 'workout' ? 'block' : 'none';
+  document.getElementById('app').scrollTop = 0;
+}
+
+function showHome() {
+  renderHome();
+  showScreen('home');
+}
+
+function showSession(session) {
+  renderSessionDetail(session);
+  showScreen('session');
+}
+
+// ══════════════════════════════════════════════
+// RENDER HOME
+// ══════════════════════════════════════════════
+function renderHome() {
+  // Stats
+  const weekAgo = new Date(Date.now() - 7*864e5);
+  const weekCount = state.sessions.filter(s => new Date(s.startedAt) > weekAgo).length;
+  document.getElementById('home-stats').innerHTML = `
+    <div class="stat"><div class="stat-val">${state.sessions.length}</div><div class="stat-label">Sessions total</div></div>
+    <div class="stat"><div class="stat-val">${weekCount}</div><div class="stat-label">Cette semaine</div></div>
+  `;
+
+  // Séance cards
+  const container = document.getElementById('seance-cards');
+  container.innerHTML = '';
+  ['A','B','C'].forEach(key => {
+    const s = PROGRAM[key];
+    const color = COLORS[key];
+    const last = getLastSession(key);
+    const card = document.createElement('div');
+    card.className = 'card card-btn';
+    card.style.borderLeft = `3px solid ${color}`;
+    card.innerHTML = `
+      <div class="seance-card">
+        <div class="seance-icon" style="background:${color}18;">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            ${key === 'A' ? '<path d="M4 14h20M14 4v20" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round"/><circle cx="14" cy="14" r="5" fill="' + color + '" fill-opacity="0.3"/>' :
+              key === 'B' ? '<path d="M5 10 C5 6 23 6 23 10 C23 14 5 18 5 22" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" fill="none"/>' :
+              '<path d="M6 20 L14 8 L22 20" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="9" y1="16" x2="19" y2="16" stroke="' + color + '" stroke-width="2" stroke-linecap="round"/>'}
+          </svg>
+        </div>
+        <div class="seance-info">
+          <span class="seance-tag" style="background:${color}">${key} — ${s.label.toUpperCase()}</span>
+          <div class="seance-name">${s.subtitle}</div>
+          <div class="seance-last">${last ? '↻ ' + formatDate(last.startedAt) : 'Pas encore réalisée'}</div>
+        </div>
+        <span class="arrow" style="color:${color}">→</span>
+      </div>
+    `;
+    card.onclick = () => startWorkout(key);
+    container.appendChild(card);
+  });
+
+  // History
+  const histList = document.getElementById('history-list');
+  const histSection = document.getElementById('history-section');
+  if (state.sessions.length === 0) {
+    histSection.style.display = 'none';
+    return;
+  }
+  histSection.style.display = 'block';
+  histList.innerHTML = '';
+  state.sessions.slice(0, 6).forEach(session => {
+    const prog = PROGRAM[session.key];
+    const color = COLORS[session.key];
+    const done = Object.values(session.sets).flat().filter(x => x.done).length;
+    const total = Object.values(session.sets).flat().length;
+    const card = document.createElement('div');
+    card.className = 'card card-btn';
+    card.innerHTML = `
+      <div class="hist-row">
+        <div class="hist-dot" style="background:${color}"></div>
+        <div>
+          <div class="hist-name">Séance ${session.key} — ${prog.label}</div>
+          <div class="hist-meta">${formatDate(session.startedAt)} · ${done}/${total} séries</div>
+        </div>
+        <span class="hist-arrow">›</span>
+      </div>
+    `;
+    card.onclick = () => showSession(session);
+    histList.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════
+// WORKOUT
+// ══════════════════════════════════════════════
+function startWorkout(key) {
+  const seance = PROGRAM[key];
+  const sets = {};
+  seance.exercises.forEach(ex => {
+    sets[ex.id] = Array.from({length: ex.sets}, () => ({kg:'', reps:'', done:false}));
+  });
+  current = { key, startedAt: new Date().toISOString(), sets };
+  renderWorkout();
+  showScreen('workout');
+}
+
+function renderWorkout() {
+  if (!current) return;
+  const seance = PROGRAM[current.key];
+  const color = COLORS[current.key];
+  const allSets = Object.values(current.sets).flat();
+  const done = allSets.filter(s => s.done).length;
+  const total = allSets.length;
+  const pct = Math.round((done / total) * 100);
+
+  // Header
+  document.getElementById('workout-header').innerHTML = `
+    <div class="workout-title-row">
+      <div>
+        <p class="label">En cours</p>
+        <h2 class="subtitle">Séance ${current.key} — <span style="color:${color}">${seance.label}</span></h2>
+      </div>
+      <button class="cancel-btn" onclick="cancelWorkout()">Annuler</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="background:${color}; width:${pct}%"></div></div>
+    <p class="progress-text">${done} / ${total} séries · ${pct}%</p>
+  `;
+
+  // Finish button
+  const btn = document.getElementById('finish-btn');
+  btn.style.background = pct === 100 ? color : 'transparent';
+  btn.style.borderColor = color;
+  btn.style.color = pct === 100 ? '#fff' : color;
+  btn.textContent = pct === 100 ? '✓ Terminer la séance' : `Terminer (${pct}% complété)`;
+
+  // Exercises
+  const list = document.getElementById('exercises-list');
+  list.innerHTML = '';
+
+  seance.exercises.forEach(ex => {
+    const sets = current.sets[ex.id];
+    const allDone = sets.every(s => s.done);
+    const card = document.createElement('div');
+    card.className = 'ex-card' + (allDone ? ' complete' : '');
+    card.id = 'excard-' + ex.id;
+
+    let setsHTML = `
+      <div class="sets-header">
+        <span>#</span><span>KG</span><span>Reps</span><span></span>
+      </div>
+    `;
+    sets.forEach((set, i) => {
+      const lastKg = getLastKg(current.key, ex.id, i);
+      setsHTML += `
+        <div class="set-row ${set.done ? 'done' : ''}" id="setrow-${ex.id}-${i}">
+          <span class="set-num">${i+1}</span>
+          <div class="set-input-wrap">
+            <input class="set-input" type="number" inputmode="decimal" placeholder="${lastKg || '0'}"
+              value="${set.kg}" onchange="updateSet('${ex.id}',${i},'kg',this.value)"
+              oninput="updateSet('${ex.id}',${i},'kg',this.value)"/>
+            ${lastKg && !set.kg ? `<span class="set-hint">↑ ${lastKg}kg</span>` : ''}
+          </div>
+          <input class="set-input" type="number" inputmode="numeric" placeholder="0"
+            value="${set.reps}" onchange="updateSet('${ex.id}',${i},'reps',this.value)"
+            oninput="updateSet('${ex.id}',${i},'reps',this.value)"/>
+          <button class="set-check ${set.done ? 'checked' : ''}" onclick="toggleDone('${ex.id}',${i})" style="${set.done ? 'background:' + color + ';border-color:' + color : ''}">
+            ${set.done ? '✓' : ''}
+          </button>
+        </div>
+      `;
+    });
+    setsHTML += '<div class="sets-spacer"></div>';
+
+    card.innerHTML = `
+      <div class="ex-illustration" style="background:linear-gradient(135deg, #111114 0%, #18181c 100%);">
+        ${ex.svg}
+        <div class="ex-machine-badge">${ex.machine}</div>
+      </div>
+      <div class="ex-body">
+        <div class="ex-name-row">
+          ${allDone ? `<span class="ex-check-icon" style="color:${color}">✓</span>` : ''}
+          <p class="ex-name" style="color:${allDone ? color : '#e0e0e0'}">${ex.name}</p>
+        </div>
+        <p class="ex-detail">${ex.detail} · <span style="color:${color}">${ex.target}</span> · RIR ${ex.rir}</p>
+        <p style="font-size:11px; color:#666; margin-bottom:14px; font-style:italic;">${ex.tip}</p>
+        ${setsHTML}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function updateSet(exId, setIdx, field, value) {
+  if (!current) return;
+  current.sets[exId][setIdx][field] = value;
+  // No full re-render to preserve focus
+  updateProgressBar();
+}
+
+function toggleDone(exId, setIdx) {
+  if (!current) return;
+  current.sets[exId][setIdx].done = !current.sets[exId][setIdx].done;
+  // Partial update for performance
+  const setRow = document.getElementById(`setrow-${exId}-${setIdx}`);
+  const done = current.sets[exId][setIdx].done;
+  const color = COLORS[current.key];
+  if (setRow) setRow.className = 'set-row' + (done ? ' done' : '');
+  const btn = setRow?.querySelector('.set-check');
+  if (btn) {
+    btn.className = 'set-check' + (done ? ' checked' : '');
+    btn.style.background = done ? color : 'transparent';
+    btn.style.borderColor = done ? color : 'var(--border)';
+    btn.textContent = done ? '✓' : '';
+  }
+  // Check if whole exercise done
+  const allDone = current.sets[exId].every(s => s.done);
+  const exCard = document.getElementById('excard-' + exId);
+  if (exCard) {
+    exCard.className = 'ex-card' + (allDone ? ' complete' : '');
+  }
+  updateProgressBar();
+}
+
+function updateProgressBar() {
+  if (!current) return;
+  const color = COLORS[current.key];
+  const allSets = Object.values(current.sets).flat();
+  const done = allSets.filter(s => s.done).length;
+  const total = allSets.length;
+  const pct = Math.round((done / total) * 100);
+  const fill = document.querySelector('.progress-fill');
+  const text = document.querySelector('.progress-text');
+  if (fill) fill.style.width = pct + '%';
+  if (text) text.textContent = `${done} / ${total} séries · ${pct}%`;
+  const btn = document.getElementById('finish-btn');
+  if (btn) {
+    btn.style.background = pct === 100 ? color : 'transparent';
+    btn.style.color = pct === 100 ? '#fff' : color;
+    btn.textContent = pct === 100 ? '✓ Terminer la séance' : `Terminer (${pct}% complété)`;
+  }
+}
+
+function cancelWorkout() {
+  if (confirm('Abandonner la séance ? Les données ne seront pas sauvegardées.')) {
+    current = null;
+    showHome();
+  }
+}
+
+function finishWorkout() {
+  if (!current) return;
+  const session = { ...current, finishedAt: new Date().toISOString() };
+  state.sessions.unshift(session);
+  saveState();
+  current = null;
+  showHome();
+}
+
+// ══════════════════════════════════════════════
+// SESSION DETAIL
+// ══════════════════════════════════════════════
+function renderSessionDetail(session) {
+  const seance = PROGRAM[session.key];
+  const color = COLORS[session.key];
+  const allSets = Object.values(session.sets).flat();
+  const doneSets = allSets.filter(s => s.done).length;
+
+  document.getElementById('session-header').innerHTML = `
+    <div>
+      <p class="label">${formatDate(session.startedAt)}</p>
+      <h2 class="subtitle">Séance ${session.key} — <span style="color:${color}">${seance.label}</span></h2>
+      <p style="font-size:12px; color:var(--muted); margin-top:3px;">${doneSets} séries complétées</p>
+    </div>
+  `;
+
+  const detail = document.getElementById('session-detail');
+  detail.innerHTML = '';
+  seance.exercises.forEach(ex => {
+    const sets = session.sets[ex.id] || [];
+    let chips = sets.map((s,i) => `
+      <div class="session-set-chip ${s.done ? 'done' : ''}">
+        S${i+1} · ${s.kg ? s.kg+'kg' : '—'} × ${s.reps || '—'}
+      </div>
+    `).join('');
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <p style="font-size:14px; font-weight:600; color:#ddd;">${ex.name}</p>
+      <p style="font-size:11px; color:var(--muted); margin-top:2px;">${ex.machine}</p>
+      <div class="session-sets">${chips}</div>
+    `;
+    detail.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+loadState();
+renderHome();
+</script>
+</body>
+</html>
